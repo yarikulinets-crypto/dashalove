@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Игра: Ярик и Даша 💖</title>
     <style>
+        /* Базовые стили */
         body {
             margin: 0;
             padding: 0;
@@ -13,22 +14,32 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #ff758c, #ff7eb3);
-            background-size: 400% 400%;
-            animation: gradientBG 10s ease infinite;
             font-family: 'Arial', sans-serif;
             overflow: hidden;
+            transition: background 1.5s ease;
+            /* Начальный фон */
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* Кнопка включения звука */
+        #soundBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #ff4081;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 2000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         /* Окно игры */
         .game-container {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.9);
             padding: 30px;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(200, 0, 50, 0.3);
@@ -37,17 +48,22 @@
             text-align: center;
             border: 4px solid #ff4081;
             position: relative;
-            transition: all 0.3s ease;
+            z-index: 10;
+            backdrop-filter: blur(5px);
         }
 
-        /* Персонажи (Эмодзи вместо картинок для надежности) */
-        .character {
+        /* Иллюстрация (Эмодзи-сцена) */
+        .illustration {
             font-size: 5rem;
             margin: 10px 0;
             transition: transform 0.3s;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            min-height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* Текст истории */
         .story-text {
             font-size: 1.3rem;
             color: #333;
@@ -57,7 +73,6 @@
             font-weight: bold;
         }
 
-        /* Кнопки выбора */
         .choices {
             display: flex;
             flex-direction: column;
@@ -84,103 +99,212 @@
 
         .btn-choice:active {
             transform: translateY(2px);
-            box-shadow: 0 2px 5px rgba(255, 64, 129, 0.4);
         }
 
-        /* Спецэффекты */
-        .shake {
-            animation: shake 0.5s;
+        /* Анимация появления текста */
+        .fade-in {
+            animation: fadeIn 0.8s ease-in;
         }
 
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+
     </style>
 </head>
 <body>
 
-    <div class="game-container" id="gameBox">
-        <div class="character" id="charEmoji">🧑</div>
+    <button id="soundBtn">🔇 Включить звук</button>
+
+    <div class="game-container">
+        <div class="illustration" id="charEmoji">🧑</div>
         <div class="story-text" id="storyText">Загрузка...</div>
         <div class="choices" id="choicesBox"></div>
     </div>
 
     <script>
-        // Сюжет игры
+        // --- 1. ЗВУКОВОЙ ДВИЖОК (Web Audio API) ---
+        let audioCtx;
+        let soundEnabled = false;
+        const soundBtn = document.getElementById('soundBtn');
+
+        soundBtn.addEventListener('click', () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            soundEnabled = !soundEnabled;
+            soundBtn.innerText = soundEnabled ? "🔊 Звук вкл" : "🔇 Включить звук";
+            
+            // Проигрываем звук клика при включении
+            if (soundEnabled) playSound('click');
+        });
+
+        // Функция синтеза звуков
+        function playSound(type) {
+            if (!soundEnabled || !audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } 
+            else if (type === 'knock') {
+                // Звук стука в дверь
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, now);
+                gainNode.gain.setValueAtTime(0.8, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+                
+                // Второй стук через 0.3 сек
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    gain2.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + 0.2);
+                }, 300);
+            }
+            else if (type === 'forest') {
+                // Шорох листвы (белый шум)
+                const bufferSize = audioCtx.sampleRate * 0.5;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 1000;
+                noise.connect(filter);
+                filter.connect(gainNode);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                noise.start(now);
+            }
+            else if (type === 'happy') {
+                // Звук радости (мажорный аккорд)
+                [440, 554, 659].forEach((freq, index) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'sine';
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.2, now + index * 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.01, now + index * 0.1 + 0.5);
+                    o.start(now + index * 0.1);
+                    o.stop(now + index * 0.1 + 0.5);
+                });
+            }
+        }
+
+        // --- 2. СЮЖЕТ И ИЛЛЮСТРАЦИИ ---
         const scenes = {
             start: {
-                char: "🧑",
+                emoji: "🧑💼🎁",
+                bg: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)",
                 text: "Привет! Я Ярик. Я иду к своей любимой Даше, чтобы подарить ей сюрприз. Но на моем пути стоит суровая реальность...",
+                sound: "click",
                 choices: [
                     { text: "Идти через темный лес 🌲", next: "forest" },
                     { text: "Пойти по длинной дороге 🛣️", next: "road" }
                 ]
             },
             forest: {
-                char: "🌲🧑‍🦱🐺",
+                emoji: "🌲🐺🧑",
+                bg: "linear-gradient(135deg, #2c3e50, #000000)", // Темный лес
                 text: "О нет! В лесу я встретил волка, который хочет отобрать подарок для Даши!",
+                sound: "forest",
                 choices: [
                     { text: "Кинуть в него палку и убежать 🪵", next: "win_forest" },
                     { text: "Сказать, что подарок для Даши, и волк поймет 🐺", next: "wolf_sad" }
                 ]
             },
             wolf_sad: {
-                char: "🐺🥺",
+                emoji: "🐺🥺🍬",
+                bg: "linear-gradient(135deg, #3a6073, #16222a)", 
                 text: "Волк заплакал: 'Эх, у меня тоже нет любимой...' Ярик подарил ему конфету, и волк пропустил его!",
+                sound: "click",
                 choices: [
                     { text: "Бежать к Даше! 🏃‍♂️", next: "dasha_house" }
                 ]
             },
             win_forest: {
-                char: "🧑💨🌲",
+                emoji: "🧑💨🌲",
+                bg: "linear-gradient(135deg, #1e3c72, #2a5298)", 
                 text: "Ярик ловко увернулся от волка и спас подарок! Но он немного поцарапал штаны.",
+                sound: "forest",
                 choices: [
                     { text: "Вперед, к Даше! 🏃‍♂️", next: "dasha_house" }
                 ]
             },
             road: {
-                char: "🧑🛣️☀️",
+                emoji: "🧑🛣️☀️",
+                bg: "linear-gradient(135deg, #f12711, #f5af19)", // Закат
                 text: "Дорога оказалась очень долгой. Ярик устал и проголодался. На обочине он нашел странный светящийся гриб.",
+                sound: "click",
                 choices: [
                     { text: "Съесть гриб 🍄", next: "mushroom" },
                     { text: "Не есть, лучше дойти голодным 🏃‍♂️", next: "dasha_house" }
                 ]
             },
             mushroom: {
-                char: "🍄😵‍💫",
+                emoji: "🍄😵‍💫",
+                bg: "linear-gradient(135deg, #8E2DE2, #4A00E0)", // Психоделический фиолетовый
                 text: "Ой-ой... Гриб оказался волшебным. Ярика закружило, и он увидел летающих котиков! (Но это не точно, он просто устал).",
+                sound: "forest",
                 choices: [
                     { text: "Пойти дальше, пока не отпустило 🚶‍♂️", next: "dasha_house" }
                 ]
             },
             dasha_house: {
-                char: "🏠🚪",
+                emoji: "🏠🚪🧑",
+                bg: "linear-gradient(135deg, #00b09b, #96c93d)", // Уютный зеленый
                 text: "Вот и дом Даши! Ярик стучит в дверь. Сердце стучит как бешеное. Дверь открывается...",
+                sound: "knock", // Звук стука!
                 choices: [
                     { text: "Сказать: 'Даша, я тебя люблю!' ❤️", next: "end_love" },
                     { text: "Сказать: 'Я тут мимо проходил...' 😐", next: "end_shy" }
                 ]
             },
             end_love: {
-                char: "🧑❤️👩",
+                emoji: "🧑❤️👩",
+                bg: "linear-gradient(135deg, #ff0844 0%, #ffb199 100%)", // Розовое счастье
                 text: "Даша улыбнулась, обняла Ярика и сказала: 'Я тебя тоже очень сильно люблю!' Подарок был вручен, а счастье — бесконечно! 🎉",
+                sound: "happy", // Звук фанфар!
                 choices: [
                     { text: "Играть заново 🔄", next: "start" }
                 ]
             },
             end_shy: {
-                char: "🧑🤡",
+                emoji: "🧑🤡",
+                bg: "linear-gradient(135deg, #FFD700, #FF8C00)", // Золотой
                 text: "Даша хитро прищурилась: 'Мимо проходил? А я ждала тебя и очень хотела тебя обнять!' И она крепко обняла Ярика. Все равно счастливый конец! ❤️",
+                sound: "happy",
                 choices: [
                     { text: "Играть заново 🔄", next: "start" }
                 ]
@@ -191,30 +315,35 @@
         const charEmoji = document.getElementById('charEmoji');
         const storyText = document.getElementById('storyText');
         const choicesBox = document.getElementById('choicesBox');
-        const gameBox = document.getElementById('gameBox');
 
-        // Функция отрисовки сцены
         function renderScene(sceneKey) {
             const scene = scenes[sceneKey];
             
-            // Добавляем эффект тряски при смене сцены для драматизма
-            gameBox.classList.remove('shake');
-            void gameBox.offsetWidth; // Трюк для перезапуска анимации
-            gameBox.classList.add('shake');
-
-            // Меняем текст и персонажа
-            charEmoji.innerText = scene.char;
+            // 1. Меняем фон с плавным переходом
+            document.body.style.background = scene.bg;
+            
+            // 2. Проигрываем звук сцены
+            playSound(scene.sound);
+            
+            // 3. Обновляем иллюстрацию
+            charEmoji.innerText = scene.emoji;
+            
+            // Анимация появления
+            storyText.classList.remove('fade-in');
+            void storyText.offsetWidth; // Трюк для перезапуска анимации
+            storyText.classList.add('fade-in');
+            
+            // 4. Обновляем текст
             storyText.innerText = scene.text;
             
-            // Очищаем старые кнопки
+            // 5. Очищаем и создаем новые кнопки
             choicesBox.innerHTML = '';
-
-            // Создаем новые кнопки
             scene.choices.forEach(choice => {
                 const btn = document.createElement('button');
                 btn.className = 'btn-choice';
                 btn.innerText = choice.text;
                 btn.onclick = () => {
+                    playSound('click'); // Звук нажатия на кнопку
                     renderScene(choice.next);
                 };
                 choicesBox.appendChild(btn);
