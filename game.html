@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра: Ярик и Даша 💖</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #ff758c, #ff7eb3);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Окно игры */
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(200, 0, 50, 0.3);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            border: 4px solid #ff4081;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* Персонажи (Эмодзи вместо картинок для надежности) */
+        .character {
+            font-size: 5rem;
+            margin: 10px 0;
+            transition: transform 0.3s;
+        }
+
+        /* Текст истории */
+        .story-text {
+            font-size: 1.3rem;
+            color: #333;
+            margin: 20px 0;
+            min-height: 80px;
+            line-height: 1.5;
+            font-weight: bold;
+        }
+
+        /* Кнопки выбора */
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-choice {
+            padding: 15px;
+            font-size: 1.1rem;
+            background-color: #ff4081;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 64, 129, 0.4);
+        }
+
+        .btn-choice:hover {
+            background-color: #f50057;
+            transform: translateY(-2px);
+        }
+
+        .btn-choice:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(255, 64, 129, 0.4);
+        }
+
+        /* Спецэффекты */
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="gameBox">
+        <div class="character" id="charEmoji">🧑</div>
+        <div class="story-text" id="storyText">Загрузка...</div>
+        <div class="choices" id="choicesBox"></div>
+    </div>
+
+    <script>
+        // Сюжет игры
+        const scenes = {
+            start: {
+                char: "🧑",
+                text: "Привет! Я Ярик. Я иду к своей любимой Даше, чтобы подарить ей сюрприз. Но на моем пути стоит суровая реальность...",
+                choices: [
+                    { text: "Идти через темный лес 🌲", next: "forest" },
+                    { text: "Пойти по длинной дороге 🛣️", next: "road" }
+                ]
+            },
+            forest: {
+                char: "🌲🧑‍🦱🐺",
+                text: "О нет! В лесу я встретил волка, который хочет отобрать подарок для Даши!",
+                choices: [
+                    { text: "Кинуть в него палку и убежать 🪵", next: "win_forest" },
+                    { text: "Сказать, что подарок для Даши, и волк поймет 🐺", next: "wolf_sad" }
+                ]
+            },
+            wolf_sad: {
+                char: "🐺🥺",
+                text: "Волк заплакал: 'Эх, у меня тоже нет любимой...' Ярик подарил ему конфету, и волк пропустил его!",
+                choices: [
+                    { text: "Бежать к Даше! 🏃‍♂️", next: "dasha_house" }
+                ]
+            },
+            win_forest: {
+                char: "🧑💨🌲",
+                text: "Ярик ловко увернулся от волка и спас подарок! Но он немного поцарапал штаны.",
+                choices: [
+                    { text: "Вперед, к Даше! 🏃‍♂️", next: "dasha_house" }
+                ]
+            },
+            road: {
+                char: "🧑🛣️☀️",
+                text: "Дорога оказалась очень долгой. Ярик устал и проголодался. На обочине он нашел странный светящийся гриб.",
+                choices: [
+                    { text: "Съесть гриб 🍄", next: "mushroom" },
+                    { text: "Не есть, лучше дойти голодным 🏃‍♂️", next: "dasha_house" }
+                ]
+            },
+            mushroom: {
+                char: "🍄😵‍💫",
+                text: "Ой-ой... Гриб оказался волшебным. Ярика закружило, и он увидел летающих котиков! (Но это не точно, он просто устал).",
+                choices: [
+                    { text: "Пойти дальше, пока не отпустило 🚶‍♂️", next: "dasha_house" }
+                ]
+            },
+            dasha_house: {
+                char: "🏠🚪",
+                text: "Вот и дом Даши! Ярик стучит в дверь. Сердце стучит как бешеное. Дверь открывается...",
+                choices: [
+                    { text: "Сказать: 'Даша, я тебя люблю!' ❤️", next: "end_love" },
+                    { text: "Сказать: 'Я тут мимо проходил...' 😐", next: "end_shy" }
+                ]
+            },
+            end_love: {
+                char: "🧑❤️👩",
+                text: "Даша улыбнулась, обняла Ярика и сказала: 'Я тебя тоже очень сильно люблю!' Подарок был вручен, а счастье — бесконечно! 🎉",
+                choices: [
+                    { text: "Играть заново 🔄", next: "start" }
+                ]
+            },
+            end_shy: {
+                char: "🧑🤡",
+                text: "Даша хитро прищурилась: 'Мимо проходил? А я ждала тебя и очень хотела тебя обнять!' И она крепко обняла Ярика. Все равно счастливый конец! ❤️",
+                choices: [
+                    { text: "Играть заново 🔄", next: "start" }
+                ]
+            }
+        };
+
+        let currentScene = 'start';
+        const charEmoji = document.getElementById('charEmoji');
+        const storyText = document.getElementById('storyText');
+        const choicesBox = document.getElementById('choicesBox');
+        const gameBox = document.getElementById('gameBox');
+
+        // Функция отрисовки сцены
+        function renderScene(sceneKey) {
+            const scene = scenes[sceneKey];
+            
+            // Добавляем эффект тряски при смене сцены для драматизма
+            gameBox.classList.remove('shake');
+            void gameBox.offsetWidth; // Трюк для перезапуска анимации
+            gameBox.classList.add('shake');
+
+            // Меняем текст и персонажа
+            charEmoji.innerText = scene.char;
+            storyText.innerText = scene.text;
+            
+            // Очищаем старые кнопки
+            choicesBox.innerHTML = '';
+
+            // Создаем новые кнопки
+            scene.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice';
+                btn.innerText = choice.text;
+                btn.onclick = () => {
+                    renderScene(choice.next);
+                };
+                choicesBox.appendChild(btn);
+            });
+        }
+
+        // Запускаем игру
+        renderScene(currentScene);
+    </script>
+</body>
+</html>
