@@ -127,11 +127,15 @@
             background-color: #f5f5f5; 
             color: #d81b60; 
             position: fixed; 
-            transition: left 0.15s ease-out, top 0.15s ease-out; /* Плавный отскок */
+            transition: left 0.1s ease-out, top 0.1s ease-out; 
             z-index: 1001;
+            /* Начальная позиция, чтобы её было видно */
+            left: 50%;
+            top: 60%; 
+            transform: translate(-50%, -50%);
         }
 
-        /* Мелкие окошки с фразами и котиками */
+        /* Карточки с котиками */
         .mini-prank {
             position: fixed;
             background: #fff;
@@ -140,22 +144,22 @@
             border: 3px solid #ff7eb3;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             box-shadow: 0 10px 20px rgba(255, 64, 129, 0.5);
             z-index: 999;
             animation: popMini 3s forwards;
             text-align: center;
             pointer-events: none; 
             display: flex;
-            flex-direction: column; /* Котик сверху, текст снизу */
+            flex-direction: column;
             align-items: center;
             gap: 10px;
-            max-width: 85vw; 
+            width: 250px; /* Фиксированная ширина карточки */
         }
 
         .mini-prank img {
-            width: 150px; /* Размер котика */
-            height: 150px;
+            width: 100%; /* Котик на всю ширину карточки */
+            height: 200px; /* Высокие котики */
             border-radius: 15px;
             object-fit: cover;
             border: 3px solid #ff7eb3;
@@ -246,56 +250,38 @@
             const btnNo = modal.querySelector('#btnNo');
             const btnYes = modal.querySelector('#btnYes');
 
-            // Умное убегание кнопки "НЕТ"
-            const runAway = (e) => {
-                e.preventDefault();
+            // Ультимативное убегание кнопки
+            const teleportButton = (e) => {
+                if (e) e.preventDefault(); 
                 
-                // Получаем текущие координаты кнопки
-                const rect = btnNo.getBoundingClientRect();
-                
-                // Размеры экрана и кнопки
-                const btnWidth = btnNo.offsetWidth;
-                const btnHeight = btnNo.offsetHeight;
-                const maxX = window.innerWidth - btnWidth;
-                const maxY = window.innerHeight - btnHeight;
+                // Ждем немного, чтобы кнопка успела отрисоваться, если она только появилась
+                setTimeout(() => {
+                    const btnWidth = btnNo.offsetWidth || 100;
+                    const btnHeight = btnNo.offsetHeight || 40;
+                    
+                    // Экранные границы с отступом в 20px, чтобы кнопка не прилипала к краям
+                    const padding = 20;
+                    const maxX = window.innerWidth - btnWidth - padding;
+                    const maxY = window.innerHeight - btnHeight - padding;
+                    
+                    // Если экран маленький, ставим координаты по минимуму
+                    const safeMaxX = Math.max(padding, maxX);
+                    const safeMaxY = Math.max(padding, maxY);
 
-                // Если у нас есть координаты касания (телефон), убегаем от пальца
-                let mouseX, mouseY;
-                if (e.touches && e.touches.length > 0) {
-                    mouseX = e.touches[0].clientX;
-                    mouseY = e.touches[0].clientY;
-                } else {
-                    mouseX = e.clientX;
-                    mouseY = e.clientY;
-                }
+                    // Генерируем новые случайные координаты
+                    const newX = Math.floor(Math.random() * (safeMaxX - padding + 1)) + padding;
+                    const newY = Math.floor(Math.random() * (safeMaxY - padding + 1)) + padding;
 
-                // Вычисляем, в какую сторону убегать (в противоположную от курсора)
-                let moveX = rect.left - mouseX;
-                let moveY = rect.top - mouseY;
-
-                // Если курсор прямо на кнопке, задаем случайное направление
-                if (moveX === 0 && moveY === 0) {
-                    moveX = Math.random() - 0.5;
-                    moveY = Math.random() - 0.5;
-                }
-
-                // Нормализуем и умножаем на дистанцию прыжка (например, 200px)
-                const distance = 200;
-                const length = Math.sqrt(moveX * moveX + moveY * moveY);
-                let newX = rect.left + (moveX / length) * distance;
-                let newY = rect.top + (moveY / length) * distance;
-
-                // Ограничиваем координаты, чтобы не улететь за экран
-                newX = Math.max(10, Math.min(newX, maxX - 10));
-                newY = Math.max(10, Math.min(newY, maxY - 10));
-
-                // Применяем новые координаты
-                btnNo.style.left = newX + 'px';
-                btnNo.style.top = newY + 'px';
+                    // Сбрасываем transform, так как мы двигаем через left/top
+                    btnNo.style.transform = 'none';
+                    btnNo.style.left = newX + 'px';
+                    btnNo.style.top = newY + 'px';
+                }, 10);
             };
 
-            btnNo.addEventListener('mouseover', runAway);
-            btnNo.addEventListener('touchstart', runAway);
+            // Срабатывает при наведении мыши (ПК) и при касании (Телефон)
+            btnNo.addEventListener('mouseover', teleportButton);
+            btnNo.addEventListener('touchstart', teleportButton, {passive: false});
 
             // Кнопка "Да"
             btnYes.addEventListener('pointerdown', (e) => {
@@ -316,7 +302,7 @@
             ];
             
             let count = 0;
-            const maxPranks = 15; // Чуть уменьшил, так как котики теперь большие
+            const maxPranks = 12; 
 
             const spawnMini = () => {
                 if (count >= maxPranks) {
@@ -328,19 +314,21 @@
                 mini.className = 'mini-prank';
                 
                 const randomText = texts[Math.floor(Math.random() * texts.length)];
-                const randomCat = `https://cataas.com/cat?width=300&height=300&random=${Math.random()}`;
+                // Запрашиваем картинку 400x400 для качества
+                const randomCat = `https://cataas.com/cat?width=400&height=400&random=${Math.random()}`;
 
                 mini.innerHTML = `<img src="${randomCat}" alt="cat"> <span>${randomText}</span>`;
                 
-                // Позиция (учитывая, что карточки теперь больше)
-                const cardWidth = 180; 
-                const cardHeight = 250;
+                // Карточки большие, поэтому координаты X и Y считаем с учетом их размера (ширина 250, высота ~300)
+                const cardWidth = 250; 
+                const cardHeight = 300;
                 
-                const maxX = window.innerWidth - cardWidth; 
-                const maxY = window.innerHeight - cardHeight;
+                const maxX = Math.max(10, window.innerWidth - cardWidth);
+                const maxY = Math.max(10, window.innerHeight - cardHeight);
                 
-                const x = Math.max(10, Math.random() * (maxX > 0 ? maxX : window.innerWidth - 50)); 
-                const y = Math.max(10, Math.random() * (maxY > 0 ? maxY : window.innerHeight - 50));
+                // Случайные координаты
+                const x = Math.random() * maxX;
+                const y = Math.random() * maxY;
                 
                 mini.style.left = x + 'px';
                 mini.style.top = y + 'px';
