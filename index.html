@@ -104,7 +104,7 @@
             display: flex;
             justify-content: space-around;
             position: relative;
-            height: 50px; /* Фиксируем высоту, чтобы кнопка не ломала верстку */
+            height: 50px; 
         }
 
         .btn {
@@ -116,7 +116,6 @@
             font-weight: bold;
             transition: transform 0.1s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            position: relative;
         }
 
         .btn:active { transform: scale(0.9); }
@@ -127,25 +126,37 @@
         .btn-no { 
             background-color: #f5f5f5; 
             color: #d81b60; 
-            transition: left 0.2s ease, top 0.2s ease; /* Плавное убегание */
+            position: fixed; /* Кнопка теперь летает по всему экрану */
+            transition: all 0.1s ease; /* Быстрая телепортация */
+            z-index: 1001;
         }
 
-        /* Мелкие окошки с признаниями */
+        /* Мелкие окошки с фразами и котиками */
         .mini-prank {
             position: fixed;
             background: #fff;
             color: #d81b60;
-            padding: 15px;
-            border: 2px solid #ff7eb3;
+            padding: 15px 20px;
+            border: 3px solid #ff7eb3;
             border-radius: 15px;
             font-weight: bold;
-            font-size: 1.1rem;
-            box-shadow: 0 5px 15px rgba(255, 64, 129, 0.3);
+            font-size: 1.2rem;
+            box-shadow: 0 5px 15px rgba(255, 64, 129, 0.4);
             z-index: 999;
             animation: popMini 3s forwards;
             text-align: center;
             pointer-events: none; 
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mini-prank img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
         }
 
         @keyframes popMini {
@@ -203,7 +214,6 @@
         let isPrankActive = false; 
 
         document.body.addEventListener('pointerdown', function(e) {
-            // Игнорируем клики по кнопкам
             if(e.target.tagName === 'BUTTON') return;
 
             for (let i = 0; i < 5; i++) {
@@ -234,27 +244,26 @@
             const btnNo = modal.querySelector('#btnNo');
             const btnYes = modal.querySelector('#btnYes');
 
-            // Функция убегания для кнопки "НЕТ"
-            const runAway = (e) => {
-                // На телефоне используем касания, на ПК - мышь
-                if (e.type === 'touchstart') {
-                    // На телефоне просто резко меняем позицию
-                    btnNo.style.position = 'fixed';
-                    btnNo.style.left = Math.random() * (window.innerWidth - 100) + 'px';
-                    btnNo.style.top = Math.random() * (window.innerHeight - 100) + 'px';
-                } else {
-                    // На ПК кнопка смещается в пределах окна при наведении
-                    const randomX = (Math.random() - 0.5) * 200;
-                    const randomY = (Math.random() - 0.5) * 150;
-                    btnNo.style.transform = `translate(${randomX}px, ${randomY}px)`;
-                }
+            // Функция телепортации для кнопки "НЕТ" (по всему экрану)
+            const teleportNo = (e) => {
+                e.preventDefault(); // Отключаем стандартные действия
+                
+                // Генерируем случайные координаты в пределах видимой части экрана
+                const maxX = window.innerWidth - 100;
+                const maxY = window.innerHeight - 60;
+                
+                const randomX = Math.random() * maxX;
+                const randomY = Math.random() * maxY;
+
+                btnNo.style.left = randomX + 'px';
+                btnNo.style.top = randomY + 'px';
             };
 
-            // События для убегания (мышь на ПК, палец на телефоне)
-            btnNo.addEventListener('mouseover', runAway);
-            btnNo.addEventListener('touchstart', runAway);
+            // На ПК срабатывает при наведении мыши, на телефоне - при касании
+            btnNo.addEventListener('mouseover', teleportNo);
+            btnNo.addEventListener('touchstart', teleportNo);
 
-            // Кнопка "Да" — запускает признания
+            // Кнопка "Да" — запускает рой
             btnYes.addEventListener('pointerdown', (e) => {
                 e.stopPropagation();
                 modal.remove(); 
@@ -263,18 +272,26 @@
         }
 
         function triggerMiniPranks() {
+            // Твои персональные фразы для Даши
             const texts = [
-                "Ярик любит Дашу!", 
-                "Ты самая лучшая! 🌸", 
-                "❤️❤️❤️", 
-                "Спасибо, что ты есть!", 
-                "Ярик + Даша = 💍",
-                "Мур-мур 😻",
-                "Будь счастлива! ✨"
+                "Дашенька любименькая сучечка",
+                "Любименькая кошечка",
+                "Маленькая такая Киса",
+                "Люлбббббллююююю",
+                "❤️❤️❤️",
+                "Мур-мур 😻"
+            ];
+            
+            // Картинки котиков (можно заменить ссылки на любые другие с интернета)
+            const catImages = [
+                "https://i.pinimg.com/236x/6b/5d/25/6b5d25914eb42072a8fb6d5e1410cb8d.jpg",
+                "https://i.pinimg.com/236x/0e/1e/6b/0e1e6b9b526a5293341a4dc8496d5a2d.jpg",
+                "https://i.pinimg.com/236x/39/95/4e/39954ed79985b691e8a2d183f7a5b26e.jpg",
+                "https://i.pinimg.com/236x/fa/35/9b/fa359b86a9d3ce1c6a92e1467d5bb9f5.jpg"
             ];
             
             let count = 0;
-            const maxPranks = 15; 
+            const maxPranks = 20; // Количество окошек
 
             const spawnMini = () => {
                 if (count >= maxPranks) {
@@ -284,14 +301,25 @@
 
                 const mini = document.createElement('div');
                 mini.className = 'mini-prank';
-                mini.innerText = texts[Math.floor(Math.random() * texts.length)];
                 
-                // Позиция окошек
-                const x = Math.random() * (window.innerWidth - 250) + 50;
-                const y = Math.random() * (window.innerHeight - 100) + 50;
+                // Выбираем случайную фразу и случайного котика
+                const randomText = texts[Math.floor(Math.random() * texts.length)];
+                const randomCat = catImages[Math.floor(Math.random() * catImages.length)];
+
+                // Формируем содержимое: котик + текст
+                mini.innerHTML = `<img src="${randomCat}" alt="cat"> <span>${randomText}</span>`;
+                
+                // Случайная позиция
+                const x = Math.random() * (window.innerWidth - 250) + 20;
+                const y = Math.random() * (window.innerHeight - 100) + 20;
                 
                 mini.style.left = x + 'px';
                 mini.style.top = y + 'px';
+
+                // Если фраза длинная, делаем шрифт меньше
+                if (randomText.length > 15) {
+                    mini.style.fontSize = '1rem';
+                }
 
                 document.body.appendChild(mini);
                 setTimeout(() => mini.remove(), 3000);
