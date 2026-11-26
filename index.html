@@ -126,8 +126,8 @@
         .btn-no { 
             background-color: #f5f5f5; 
             color: #d81b60; 
-            position: fixed; /* Кнопка теперь летает по всему экрану */
-            transition: all 0.1s ease; /* Быстрая телепортация */
+            position: fixed; 
+            transition: all 0.1s ease; 
             z-index: 1001;
         }
 
@@ -136,7 +136,7 @@
             position: fixed;
             background: #fff;
             color: #d81b60;
-            padding: 15px 20px;
+            padding: 10px 15px;
             border: 3px solid #ff7eb3;
             border-radius: 15px;
             font-weight: bold;
@@ -146,17 +146,18 @@
             animation: popMini 3s forwards;
             text-align: center;
             pointer-events: none; 
-            white-space: nowrap;
             display: flex;
             align-items: center;
             gap: 10px;
+            max-width: 80vw; /* Ограничиваем ширину на телефонах */
         }
 
         .mini-prank img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
             object-fit: cover;
+            flex-shrink: 0; /* Чтобы картинка не сжималась */
         }
 
         @keyframes popMini {
@@ -244,22 +245,27 @@
             const btnNo = modal.querySelector('#btnNo');
             const btnYes = modal.querySelector('#btnYes');
 
-            // Функция телепортации для кнопки "НЕТ" (по всему экрану)
+            // Функция телепортации кнопки "НЕТ" (в пределах экрана)
             const teleportNo = (e) => {
-                e.preventDefault(); // Отключаем стандартные действия
+                e.preventDefault(); 
                 
-                // Генерируем случайные координаты в пределах видимой части экрана
-                const maxX = window.innerWidth - 100;
-                const maxY = window.innerHeight - 60;
+                // Получаем размеры кнопки, чтобы она не улетала за край
+                const btnWidth = btnNo.offsetWidth;
+                const btnHeight = btnNo.offsetHeight;
                 
-                const randomX = Math.random() * maxX;
-                const randomY = Math.random() * maxY;
+                // Вычисляем безопасные границы (чтобы кнопка не вылезла за экран)
+                const maxX = window.innerWidth - btnWidth - 20; // отступ 20px справа
+                const maxY = window.innerHeight - btnHeight - 20; // отступ 20px снизу
+                
+                // Генерируем случайные координаты
+                const randomX = Math.max(20, Math.random() * maxX); 
+                const randomY = Math.max(20, Math.random() * maxY);
 
+                // Применяем координаты
                 btnNo.style.left = randomX + 'px';
                 btnNo.style.top = randomY + 'px';
             };
 
-            // На ПК срабатывает при наведении мыши, на телефоне - при касании
             btnNo.addEventListener('mouseover', teleportNo);
             btnNo.addEventListener('touchstart', teleportNo);
 
@@ -272,7 +278,6 @@
         }
 
         function triggerMiniPranks() {
-            // Твои персональные фразы для Даши
             const texts = [
                 "Дашенька любименькая сучечка",
                 "Любименькая кошечка",
@@ -282,16 +287,8 @@
                 "Мур-мур 😻"
             ];
             
-            // Картинки котиков (можно заменить ссылки на любые другие с интернета)
-            const catImages = [
-                "https://i.pinimg.com/236x/6b/5d/25/6b5d25914eb42072a8fb6d5e1410cb8d.jpg",
-                "https://i.pinimg.com/236x/0e/1e/6b/0e1e6b9b526a5293341a4dc8496d5a2d.jpg",
-                "https://i.pinimg.com/236x/39/95/4e/39954ed79985b691e8a2d183f7a5b26e.jpg",
-                "https://i.pinimg.com/236x/fa/35/9b/fa359b86a9d3ce1c6a92e1467d5bb9f5.jpg"
-            ];
-            
             let count = 0;
-            const maxPranks = 20; // Количество окошек
+            const maxPranks = 20; 
 
             const spawnMini = () => {
                 if (count >= maxPranks) {
@@ -302,21 +299,25 @@
                 const mini = document.createElement('div');
                 mini.className = 'mini-prank';
                 
-                // Выбираем случайную фразу и случайного котика
                 const randomText = texts[Math.floor(Math.random() * texts.length)];
-                const randomCat = catImages[Math.floor(Math.random() * catImages.length)];
+                
+                // Используем надежный сервис cataas.com для случайных котиков
+                // ?random=... заставляет сервер выдавать каждый раз новую картинку
+                const randomCat = `https://cataas.com/cat?width=100&height=100&random=${Math.random()}`;
 
-                // Формируем содержимое: котик + текст
                 mini.innerHTML = `<img src="${randomCat}" alt="cat"> <span>${randomText}</span>`;
                 
-                // Случайная позиция
-                const x = Math.random() * (window.innerWidth - 250) + 20;
-                const y = Math.random() * (window.innerHeight - 100) + 20;
+                // Позиция в пределах экрана
+                const maxX = window.innerWidth - 250; 
+                const maxY = window.innerHeight - 100;
+                
+                // Если экран телефона слишком узкий, ставим отступ поменьше
+                const x = Math.max(10, Math.random() * (maxX > 0 ? maxX : window.innerWidth - 50)); 
+                const y = Math.max(10, Math.random() * (maxY > 0 ? maxY : window.innerHeight - 50));
                 
                 mini.style.left = x + 'px';
                 mini.style.top = y + 'px';
 
-                // Если фраза длинная, делаем шрифт меньше
                 if (randomText.length > 15) {
                     mini.style.fontSize = '1rem';
                 }
