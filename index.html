@@ -1,1 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Для Даши ❤️</title>
+    <style>
+        /* Романтичный анимированный фон */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #ff758c, #ff7eb3);
+            background-size: 400% 400%;
+            animation: gradientBG 8s ease infinite;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden; 
+            user-select: none; 
+        }
 
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Стиль текста */
+        h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            text-align: center;
+            text-shadow: 2px 2px 10px rgba(200, 0, 50, 0.4);
+            padding: 0 20px;
+            z-index: 5;
+            line-height: 1.4;
+        }
+
+        .highlight {
+            font-size: 3.5rem;
+            display: block;
+            margin-top: 10px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Стили для летающих эмодзи */
+        .emoji {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .fly-auto { animation: flyUp 4s linear forwards; }
+
+        @keyframes flyUp {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+        }
+
+        .pop-click { animation: popOut 0.8s ease-out forwards; }
+
+        @keyframes popOut {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)) scale(1.5) rotate(var(--r)); opacity: 0; }
+        }
+
+        /* Модальное окно */
+        .prank-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(200, 0, 50, 0.3);
+            text-align: center;
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 80%;
+            max-width: 400px;
+            border: 3px solid #ff7eb3;
+        }
+
+        .prank-modal.show { transform: translate(-50%, -50%) scale(1); }
+
+        .prank-modal p {
+            font-size: 1.5rem;
+            color: #d81b60;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn:active { transform: scale(0.9); }
+
+        .btn-yes { background-color: #ff4081; color: white; }
+        .btn-no { background-color: #f5f5f5; color: #d81b60; }
+
+        /* Мелкие окошки с признаниями */
+        .mini-prank {
+            position: fixed;
+            background: #fff;
+            color: #d81b60;
+            padding: 15px;
+            border: 2px solid #ff7eb3;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 5px 15px rgba(255, 64, 129, 0.3);
+            z-index: 999;
+            animation: popMini 3s forwards;
+            text-align: center;
+            pointer-events: none; 
+            white-space: nowrap;
+        }
+
+        @keyframes popMini {
+            0% { transform: scale(0) rotate(-15deg); opacity: 1; }
+            20% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+            80% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>
+        Даша, привет! Это Ярик 🎁
+        <span class="highlight">Я тебя люблю! ❤️</span>
+    </h1>
+
+    <script>
+        // Романтичные и смешные эмодзи
+        const emojis = ['❤️', '💖', '😘', '🌸', '🎁', '✨', '💌', '🌹', '😻', '💍'];
+        
+        // --- 1. АВТОМАТИЧЕСКИЕ ЭМОДЗИ (Летят снизу) ---
+        function createAutoEmoji() {
+            const el = document.createElement('div');
+            el.className = 'emoji fly-auto';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.fontSize = (Math.random() * 2.5 + 1.5) + 'rem';
+            el.style.animationDuration = (Math.random() * 3 + 3) + 's';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 6000);
+        }
+        setInterval(createAutoEmoji, 400);
+
+        // --- 2. ЭМОДЗИ ПРИ КЛИКЕ ---
+        function createClickEmoji(x, y) {
+            const el = document.createElement('div');
+            el.className = 'emoji pop-click';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.fontSize = (Math.random() * 1.5 + 2) + 'rem';
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 120 + 40;
+            
+            el.style.setProperty('--x', Math.cos(angle) * distance + 'px');
+            el.style.setProperty('--y', Math.sin(angle) * distance + 'px');
+            el.style.setProperty('--r', Math.random() * 360 - 180 + 'deg');
+
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        // --- 3. ЛОГИКА ВЗАИМОДЕЙСТВИЯ ---
+        let isPrankActive = false; 
+
+        document.body.addEventListener('pointerdown', function(e) {
+            for (let i = 0; i < 5; i++) {
+                createClickEmoji(e.clientX, e.clientY);
+            }
+
+            if (!isPrankActive && !document.querySelector('.prank-modal')) {
+                showPrankModal();
+            }
+        });
+
+        function showPrankModal() {
+            isPrankActive = true;
+
+            const modal = document.createElement('div');
+            modal.className = 'prank-modal';
+            modal.innerHTML = `
+                <p>Даша, ты принимаешь<br>мою любовь? 🥺</p>
+                <div class="btn-group">
+                    <button class="btn btn-yes" id="btnYes">ДА! ❤️</button>
+                    <button class="btn btn-no" id="btnNo">НЕТ 😡</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            setTimeout(() => modal.classList.add('show'), 10);
+
+            // Кнопка "Нет" — прикол: она убегает или просто закрывает
+            modal.querySelector('#btnNo').addEventListener('pointerdown', (e) => {
+                e.stopPropagation(); 
+                // Прикол: кнопка "Нет" уменьшается и уезжает вниз
+                e.target.style.transform = 'scale(0.5) translateY(50px)';
+                e.target.style.opacity = '0';
+                e.target.innerText = "Упс...";
+                setTimeout(() => {
+                    modal.classList.remove('show');
+                    setTimeout(() => { modal.remove(); isPrankActive = false; }, 300);
+                }, 500);
+            });
+
+            // Кнопка "Да" — запускает признания
+            modal.querySelector('#btnYes').addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                modal.remove(); 
+                triggerMiniPranks(); 
+            });
+        }
+
+        function triggerMiniPranks() {
+            const texts = [
+                "Ярик любит Дашу!", 
+                "Ты самая лучшая! 🌸", 
+                "❤️❤️❤️", 
+                "Спасибо, что ты есть!", 
+                "Ярик + Даша = 💍",
+                "Мур-мур 😻",
+                "Будь счастлива! ✨"
+            ];
+            
+            let count = 0;
+            const maxPranks = 15; 
+
+            const spawnMini = () => {
+                if (count >= maxPranks) {
+                    setTimeout(() => { isPrankActive = false; }, 3000);
+                    return;
+                }
+
+                const mini = document.createElement('div');
+                mini.className = 'mini-prank';
+                mini.innerText = texts[Math.floor(Math.random() * texts.length)];
+                
+                // Чтобы окошки не вылезали за экран
+                const x = Math.random() * (window.innerWidth - 250) + 50;
+                const y = Math.random() * (window.innerHeight - 100) + 50;
+                
+                mini.style.left = x + 'px';
+                mini.style.top = y + 'px';
+
+                document.body.appendChild(mini);
+                setTimeout(() => mini.remove(), 3000);
+
+                count++;
+                setTimeout(spawnMini, Math.random() * 150 + 100);
+            };
+
+            spawnMini();
+        }
+    </script>
+</body>
+</html>
