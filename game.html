@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Приключение Ярика и Даши</title>
     <style>
-        /* Базовые стили */
         body {
             margin: 0;
             padding: 0;
@@ -16,10 +15,10 @@
             align-items: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
-            background-color: #000;
-            transition: background-image 1s ease-in-out;
+            background-color: #1a1a1a; /* Темный фон по умолчанию, пока грузится картинка */
             background-size: cover;
             background-position: center;
+            transition: background-image 1s ease-in-out;
         }
 
         /* Затемнение фона для читаемости текста */
@@ -55,7 +54,7 @@
 
         /* Окно игры (Стеклянный эффект) */
         .game-container {
-            background: rgba(20, 20, 20, 0.6);
+            background: rgba(20, 20, 20, 0.7);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             padding: 30px;
@@ -68,9 +67,15 @@
             position: relative;
             z-index: 10;
             color: white;
+            /* Плавное появление самого окна */
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
         }
 
-        /* Эмодзи-персонажи в окне */
+        .game-container.visible {
+            opacity: 1;
+        }
+
         .illustration {
             font-size: 5rem;
             margin: 10px 0;
@@ -107,7 +112,6 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s;
-            backdrop-filter: blur(5px);
         }
 
         .btn-choice:hover {
@@ -121,7 +125,6 @@
             transform: translateY(0);
         }
 
-        /* Анимация появления текста */
         .fade-in {
             animation: fadeIn 0.6s ease-out;
         }
@@ -130,51 +133,31 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Индикатор загрузки */
-        .loading {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-            color: white;
-            font-size: 1.5rem;
-            transition: opacity 1s;
-        }
     </style>
 </head>
 <body>
 
-    <!-- Заставка для загрузки -->
-    <div class="loading" id="loadingScreen">Загрузка приключения... 🚀</div>
-
     <button id="soundBtn">🔇 Включить звук</button>
 
-    <div class="game-container" id="gameBox" style="display: none;">
+    <div class="game-container" id="gameBox">
         <div class="illustration" id="charEmoji">🧑</div>
         <div class="story-text" id="storyText">Загрузка...</div>
         <div class="choices" id="choicesBox"></div>
     </div>
 
     <script>
-        // --- 1. НАСТРОЙКА ЗВУКА И РЕСУРСОВ ---
-        let audioCtx;
+        // --- 1. ЗВУКИ ---
         let soundEnabled = false;
         const soundBtn = document.getElementById('soundBtn');
         
-        // Ссылки на реальные звуки (свободные библиотеки)
         const sounds = {
             click: 'https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg',
             forest: 'https://actions.google.com/sounds/v1/ambiences/forest_ambience.ogg',
             knock: 'https://actions.google.com/sounds/v1/household/door_knock.ogg',
-            happy: 'https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg', // Веселый звук
+            happy: 'https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg',
             wolf: 'https://actions.google.com/sounds/v1/animals/wolf_howl.ogg'
         };
 
-        // Аудио-объекты
         const audioObjects = {};
         for (let key in sounds) {
             audioObjects[key] = new Audio(sounds[key]);
@@ -193,15 +176,15 @@
             audio.play().catch(e => console.log("Ошибка звука:", e));
         }
 
-        // --- 2. КРАСИВЫЕ ФОНЫ (Ссылки на Unsplash) ---
+        // --- 2. ФОНЫ (Оптимизированные ссылки) ---
         const backgrounds = {
-            start: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1920&auto=format&fit=crop', // Красивое море
-            forest: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=1920&auto=format&fit=crop', // Темный лес
-            road: 'https://images.unsplash.com/photo-1473042904451-00171c69419d?q=80&w=1920&auto=format&fit=crop', // Дорога на закате
-            mushroom: 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=1920&auto=format&fit=crop', // Волшебный лес
-            house: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=1920&auto=format&fit=crop', // Уютный дом
-            love: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1920&auto=format&fit=crop', // Романтика/Сердце
-            grandma: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=1920&auto=format&fit=crop' // Уютная комната
+            start: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=60',
+            forest: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=60',
+            road: 'https://images.unsplash.com/photo-1473042904451-00171c69419d?w=800&q=60',
+            mushroom: 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=800&q=60',
+            house: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=800&q=60',
+            love: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=800&q=60',
+            grandma: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&q=60'
         };
 
         // --- 3. СЮЖЕТ ---
@@ -298,47 +281,23 @@
             }
         };
 
+        // --- 4. ЛОГИКА ИГРЫ ---
         let currentScene = 'start';
         const charEmoji = document.getElementById('charEmoji');
         const storyText = document.getElementById('storyText');
         const choicesBox = document.getElementById('choicesBox');
         const gameBox = document.getElementById('gameBox');
-        const loadingScreen = document.getElementById('loadingScreen');
 
-        // Предзагрузка картинок для плавности
-        let loadedImages = 0;
-        const totalImages = Object.keys(backgrounds).length;
-        
-        for (let key in backgrounds) {
-            const img = new Image();
-            img.src = backgrounds[key];
-            img.onload = () => {
-                loadedImages++;
-                if (loadedImages >= totalImages) {
-                    // Когда все картинки загружены, убираем заставку
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                        gameBox.style.display = 'block';
-                        renderScene(currentScene);
-                    }, 500);
-                }
-            };
-            // На случай ошибки загрузки
-            img.onerror = () => {
-                loadedImages++;
-                if (loadedImages >= totalImages) {
-                    loadingScreen.style.display = 'none';
-                    gameBox.style.display = 'block';
-                    renderScene(currentScene);
-                }
-            }
-        }
+        // Запускаем игру сразу после загрузки страницы
+        window.onload = () => {
+            gameBox.classList.add('visible'); // Показываем окно
+            renderScene(currentScene);        // Рисуем первую сцену
+        };
 
         function renderScene(sceneKey) {
             const scene = scenes[sceneKey];
             
-            // 1. Меняем фон (плавно через CSS transition)
+            // 1. Меняем фон (плавно). Картинка подгрузится в фоне.
             document.body.style.backgroundImage = `url('${backgrounds[scene.bg]}')`;
             
             // 2. Звук
