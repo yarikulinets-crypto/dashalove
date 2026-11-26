@@ -94,7 +94,7 @@
         .prank-modal.show { transform: translate(-50%, -50%) scale(1); }
 
         .prank-modal p {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: #d81b60;
             margin-bottom: 25px;
             font-weight: bold;
@@ -103,6 +103,8 @@
         .btn-group {
             display: flex;
             justify-content: space-around;
+            position: relative;
+            height: 50px; /* Фиксируем высоту, чтобы кнопка не ломала верстку */
         }
 
         .btn {
@@ -114,12 +116,19 @@
             font-weight: bold;
             transition: transform 0.1s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .btn:active { transform: scale(0.9); }
 
         .btn-yes { background-color: #ff4081; color: white; }
-        .btn-no { background-color: #f5f5f5; color: #d81b60; }
+        
+        /* Стили для убегающей кнопки */
+        .btn-no { 
+            background-color: #f5f5f5; 
+            color: #d81b60; 
+            transition: left 0.2s ease, top 0.2s ease; /* Плавное убегание */
+        }
 
         /* Мелкие окошки с признаниями */
         .mini-prank {
@@ -150,15 +159,14 @@
 <body>
 
     <h1>
-        Даша, привет! Это Ярик 🎁
-        <span class="highlight">Я тебя люблю! ❤️</span>
+        Даша, привет! Это Ярик<br>
+        <span class="highlight">Я тебя люблю ❤️</span>
     </h1>
 
     <script>
-        // Романтичные и смешные эмодзи
         const emojis = ['❤️', '💖', '😘', '🌸', '🎁', '✨', '💌', '🌹', '😻', '💍'];
         
-        // --- 1. АВТОМАТИЧЕСКИЕ ЭМОДЗИ (Летят снизу) ---
+        // --- 1. АВТОМАТИЧЕСКИЕ ЭМОДЗИ ---
         function createAutoEmoji() {
             const el = document.createElement('div');
             el.className = 'emoji fly-auto';
@@ -195,6 +203,9 @@
         let isPrankActive = false; 
 
         document.body.addEventListener('pointerdown', function(e) {
+            // Игнорируем клики по кнопкам
+            if(e.target.tagName === 'BUTTON') return;
+
             for (let i = 0; i < 5; i++) {
                 createClickEmoji(e.clientX, e.clientY);
             }
@@ -210,31 +221,41 @@
             const modal = document.createElement('div');
             modal.className = 'prank-modal';
             modal.innerHTML = `
-                <p>Даша, ты принимаешь<br>мою любовь? 🥺</p>
+                <p>Ты меня любишь????? 🥺</p>
                 <div class="btn-group">
                     <button class="btn btn-yes" id="btnYes">ДА! ❤️</button>
-                    <button class="btn btn-no" id="btnNo">НЕТ 😡</button>
+                    <button class="btn btn-no" id="btnNo">НЕТ</button>
                 </div>
             `;
             document.body.appendChild(modal);
 
             setTimeout(() => modal.classList.add('show'), 10);
 
-            // Кнопка "Нет" — прикол: она убегает или просто закрывает
-            modal.querySelector('#btnNo').addEventListener('pointerdown', (e) => {
-                e.stopPropagation(); 
-                // Прикол: кнопка "Нет" уменьшается и уезжает вниз
-                e.target.style.transform = 'scale(0.5) translateY(50px)';
-                e.target.style.opacity = '0';
-                e.target.innerText = "Упс...";
-                setTimeout(() => {
-                    modal.classList.remove('show');
-                    setTimeout(() => { modal.remove(); isPrankActive = false; }, 300);
-                }, 500);
-            });
+            const btnNo = modal.querySelector('#btnNo');
+            const btnYes = modal.querySelector('#btnYes');
+
+            // Функция убегания для кнопки "НЕТ"
+            const runAway = (e) => {
+                // На телефоне используем касания, на ПК - мышь
+                if (e.type === 'touchstart') {
+                    // На телефоне просто резко меняем позицию
+                    btnNo.style.position = 'fixed';
+                    btnNo.style.left = Math.random() * (window.innerWidth - 100) + 'px';
+                    btnNo.style.top = Math.random() * (window.innerHeight - 100) + 'px';
+                } else {
+                    // На ПК кнопка смещается в пределах окна при наведении
+                    const randomX = (Math.random() - 0.5) * 200;
+                    const randomY = (Math.random() - 0.5) * 150;
+                    btnNo.style.transform = `translate(${randomX}px, ${randomY}px)`;
+                }
+            };
+
+            // События для убегания (мышь на ПК, палец на телефоне)
+            btnNo.addEventListener('mouseover', runAway);
+            btnNo.addEventListener('touchstart', runAway);
 
             // Кнопка "Да" — запускает признания
-            modal.querySelector('#btnYes').addEventListener('pointerdown', (e) => {
+            btnYes.addEventListener('pointerdown', (e) => {
                 e.stopPropagation();
                 modal.remove(); 
                 triggerMiniPranks(); 
@@ -265,7 +286,7 @@
                 mini.className = 'mini-prank';
                 mini.innerText = texts[Math.floor(Math.random() * texts.length)];
                 
-                // Чтобы окошки не вылезали за экран
+                // Позиция окошек
                 const x = Math.random() * (window.innerWidth - 250) + 50;
                 const y = Math.random() * (window.innerHeight - 100) + 50;
                 
