@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+
+        /* --- ЭКРАН 1: ПРЕДУПРЕЖДЕНИЕ И ТАЙМЕР --- */
+        .warning-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 0.5s ease;
+        }
+
+        .warning-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: pulseRed 1s infinite alternate;
+        }
+
+        @keyframes pulseRed {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px red); }
+            100% { transform: scale(1.1); filter: drop-shadow(0 0 30px red); }
+        }
+
+        .warning-text {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffcccc;
+            padding: 0 20px;
+        }
+
+        .timer {
+            font-size: 8rem;
+            font-weight: bold;
+            color: #ff3333;
+            text-shadow: 0 0 20px #ff3333;
+        }
+
+        /* --- ЭКРАН 2: БЛОКИРОВКА --- */
+        .lock-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px 20px;
+            background: black;
+            z-index: 1000;
+            opacity: 0; /* Изначально скрыт */
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+
+        .lock-screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .time-date {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .time {
+            font-size: 6rem;
+            font-weight: 300;
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+
+        .date {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        .unlock-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 80%;
+            margin: 0 auto;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            animation: pulse 2s infinite;
+            margin-bottom: 40px;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255,255,255, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(255,255,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+        }
+
+        /* --- ЭКРАН 3: ПРИКОЛ --- */
+        .prank-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #ff4081 0%, #000 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .prank-screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .prank-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 20px white;
+            animation: shake 0.5s infinite;
+        }
+
+        .prank-subtext {
+            font-size: 1.2rem;
+            margin-top: 20px;
+            color: #ffccff;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg) scale(1.05); }
+            75% { transform: rotate(5deg) scale(1.05); }
+        }
+
+        audio { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Аудио -->
+    <audio id="soundBeep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    <audio id="soundOff" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg"></audio>
+    <audio id="soundOn" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+
+    <!-- ЭКРАН 1: Таймер -->
+    <div class="warning-screen" id="warningScreen">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-text">Внимание! Обнаружена критическая ошибка.<br>Телефон выключится через:</div>
+        <div class="timer" id="timerDisplay">5</div>
+    </div>
+
+    <!-- ЭКРАН 2: Блокировка -->
+    <div class="lock-screen" id="lockScreen">
+        <div class="time-date">
+            <div class="time" id="timeDisplay">00:00</div>
+            <div class="date" id="dateDisplay">1 января, понедельник</div>
+        </div>
+        <div class="unlock-btn" id="unlockBtn">Нажмите, чтобы разблокировать</div>
+    </div>
+
+    <!-- ЭКРАН 3: Прикол -->
+    <div class="prank-screen" id="prankScreen">
+        <div class="prank-text">ТЕЛЕФОН НЕ ВЫКЛЮЧИЛСЯ 😂</div>
+        <div class="prank-subtext">Хрен тебе, а не разблокировка!</div>
+        <div style="font-size: 4rem; margin-top: 30px;">📱🖕</div>
+    </div>
+
+    <script>
+        const warningScreen = document.getElementById('warningScreen');
+        const lockScreen = document.getElementById('lockScreen');
+        const prankScreen = document.getElementById('prankScreen');
+        const unlockBtn = document.getElementById('unlockBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const dateDisplay = document.getElementById('dateDisplay');
+        
+        const soundBeep = document.getElementById('soundBeep');
+        const soundOff = document.getElementById('soundOff');
+        const soundOn = document.getElementById('soundOn');
+
+        // --- 1. ЛОГИКА ТАЙМЕРА ---
+        let timeLeft = 5;
+        
+        // Функция тиканья
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerDisplay.innerText = timeLeft;
+
+            // Проигрываем писк на каждой секунде (кроме последней)
+            if (timeLeft > 0) {
+                soundBeep.volume = 0.3;
+                soundBeep.play().catch(() => {});
+            }
+
+            // Когда время вышло
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                
+                // Звук "выключения"
+                soundOff.volume = 0.5;
+                soundOff.play().catch(() => {});
+
+                // Прячем экран таймера
+                warningScreen.style.opacity = '0';
+                
+                setTimeout(() => {
+                    warningScreen.style.display = 'none';
+                    
+                    // Показываем экран блокировки
+                    lockScreen.classList.add('active');
+                    updateTime(); // Обновляем время
+                    setInterval(updateTime, 1000); // Запускаем часы
+                }, 500);
+            }
+        }, 1000);
+
+        // --- 2. ЧАСЫ НА БЛОКИРОВКЕ ---
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            timeDisplay.innerText = `${hours}:${minutes}`;
+
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            let dateStr = now.toLocaleDateString('ru-RU', options);
+            dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            dateDisplay.innerText = dateStr;
+        }
+
+        // --- 3. РАЗБЛОКИРОВКА И ПРИКОЛ ---
+        unlockBtn.addEventListener('click', () => {
+            lockScreen.classList.remove('active');
+            
+            setTimeout(() => {
+                prankScreen.classList.add('active');
+                
+                // Веселый звук
+                soundOn.volume = 0.6;
+                soundOn.play().catch(() => {});
+                
+                // Вибрация
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200, 100, 500]);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
